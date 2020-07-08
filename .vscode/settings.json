@@ -1,0 +1,19 @@
+{
+    "editor.formatOnSave": false,
+    "eslint.run": "onSave",
+    "eslint.validate": ["javascript", "typescript", "json", "yml"],
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typecript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "typescript.tsdk": "node_modules/typescript/lib"
+}
