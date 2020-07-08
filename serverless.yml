@@ -1,0 +1,62 @@
+service:
+  name: serverless-plugin-challenge
+
+frameworkVersion: ">=1.0.0"
+
+plugins:
+  - custom-post-deploy
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: ${opt:region, 'us-east-2'}
+  stage: ${env:NODE_ENV, 'development'}
+  profile: ${self.provider.stage}
+  stackName: ${self.service.name}-${self.provider.stage}
+  apiName: ${self.service.name}-${self.provider.stage}
+  logRetentionInDays: 7
+  deploymentBucket:
+    name: ${self.resources.Resources.ServiceBucket.Properties.BucketName}
+  deploymentPrefix: deploys
+  package:
+    excludeDevDependencies: true
+
+functions:
+  fileHandler:
+    name: ${self.service.name}-${self.provider.stage}-post-deploy
+    handler: handler.default
+    events:
+      - s3:
+          bucket: photos
+          event: s3:ObjectCreated:*
+  postDeploy:
+    name: ${self.service.name}-${self.provider.stage}-post-deploy
+    handler: ""
+    events:
+      - http:
+          path: "/"
+          method: post
+
+resources:
+  Resources:
+    ServiceBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self.service.name}-${self.provider.stage}
+    ServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self.service.name}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+  Outputs:
+    LambdaArn:
+      Description: Arn of the lambda to call after:aws:deploy:finalize:cleanup
+      Value:
+        "Fn::GetAtt": [postDeploy, Arn]
+      Export:
+        Name: ${self.service.name}-${self.provider.stage}-post-deploy-handler
