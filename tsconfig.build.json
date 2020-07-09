@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["./.serverless_plugins/**/*", "./src/**/*"]
+  "include": ["./.serverless_plugins/**/*", "./src/**/*", "./lib/**/*"]
 }

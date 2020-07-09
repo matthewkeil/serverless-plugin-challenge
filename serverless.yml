@@ -1,62 +1,74 @@
 service:
   name: serverless-plugin-challenge
 
-frameworkVersion: ">=1.0.0"
-
 plugins:
+  - serverless-plugin-upload-s3
+  - custom-create-service-bucket
   - custom-post-deploy
+
+custom:
+  s3Key: "uploads/${self:provider.stage}/deployData.json"
+  filesToUpload:
+    - localPath: ./src/deployData.json
+      fileName: ${self:custom.s3Key}
+      s3Bucket: ${self:service.name}
 
 provider:
   name: aws
   runtime: nodejs12.x
   region: ${opt:region, 'us-east-2'}
   stage: ${env:NODE_ENV, 'development'}
-  profile: ${self.provider.stage}
-  stackName: ${self.service.name}-${self.provider.stage}
-  apiName: ${self.service.name}-${self.provider.stage}
+  stackName: ${self:service.name}-${self:provider.stage}
   logRetentionInDays: 7
   deploymentBucket:
-    name: ${self.resources.Resources.ServiceBucket.Properties.BucketName}
+    name: ${self:service.name}
   deploymentPrefix: deploys
-  package:
-    excludeDevDependencies: true
+  iamRoleStatements:
+  - Effect: Allow
+    Action:
+    - s3:GetObject
+    Resource:
+    - Fn::Join:
+      - ''
+      - - 'arn:aws:s3:::'
+        - ${self:service.name}
+        - "/*"
+  - Effect: Allow
+    Action:
+    - dynamodb:PutItem
+    Resource:
+    - Fn::Join:
+      - ''
+      - - 'arn:aws:dynamodb:'
+        - ${self:provider.region}
+        - ":"
+        - { Ref: "AWS::AccountId" }
+        - ":table/"
+        - ${self:resources.Resources.Table.Properties.TableName}
+
+package:
+  excludeDevDependencies: true
 
 functions:
-  fileHandler:
-    name: ${self.service.name}-${self.provider.stage}-post-deploy
-    handler: handler.default
-    events:
-      - s3:
-          bucket: photos
-          event: s3:ObjectCreated:*
   postDeploy:
-    name: ${self.service.name}-${self.provider.stage}-post-deploy
-    handler: ""
-    events:
-      - http:
-          path: "/"
-          method: post
+    name: ${self:service.name}-${self:provider.stage}-post-deploy-handler
+    handler: "./src/s3ToDynamo.handler"
+    environment:
+      BUCKET: ${self:service.name}
+      TABLE_NAME: ${self:resources.Resources.Table.Properties.TableName}
 
 resources:
   Resources:
-    ServiceBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self.service.name}-${self.provider.stage}
-    ServiceTable:
+    Table:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self.service.name}
+        TableName: ${self:service.name}-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
-  Outputs:
-    LambdaArn:
-      Description: Arn of the lambda to call after:aws:deploy:finalize:cleanup
-      Value:
-        "Fn::GetAtt": [postDeploy, Arn]
-      Export:
-        Name: ${self.service.name}-${self.provider.stage}-post-deploy-handler
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

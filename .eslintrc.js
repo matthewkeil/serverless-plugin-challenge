@@ -17,5 +17,7 @@ module.exports = {
     "prettier/standard",
     "prettier"
   ],
-  rules: {}
+  rules: {
+    "@typescript-eslint/explicit-function-return-type": 0
+  }
 };

@@ -2,11 +2,12 @@
   "name": "serverless-plugin-challenge",
   "version": "1.0.0",
   "scripts": {
+    "build": "node_modules/.bin/tsc --project tsconfig.build.json",
+    "deploy": "npm run build && npm run sls -- deploy",
     "lint": "node_modules/.bin/eslint --ext .ts --fix src/ .serverless_plugins/",
     "node": "node",
-    "sls": "node_modules/.bin/sls",
+    "sls": "node -r dotenv/config node_modules/.bin/sls",
     "ts": "npm run node -- -r ts-node/register",
-    "tsc": "node_modules/.bin/tsc --project tsconfig.build.json",
     "debug": "npm run ts --inspect-brk"
   },
   "repository": {
@@ -19,15 +20,23 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.58",
     "@types/serverless": "^1.72.5",
+    "@types/uuid": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^2.6.1",
     "@typescript-eslint/parser": "^2.6.1",
+    "aws-sdk": "^2.711.0",
     "debug": "^4.1.1",
     "eslint": "^6.6.0",
     "eslint-config-prettier": "^6.5.0",
     "eslint-plugin-prettier": "^3.1.1",
     "prettier": "^1.17.1",
     "serverless": "^1.74.1",
+    "serverless-dotenv-plugin": "^2.4.2",
+    "serverless-plugin-typescript": "^1.1.9",
+    "serverless-plugin-upload-s3": "^1.0.1",
     "ts-node": "^8.4.1",
     "typescript": "^3.9.6"
+  },
+  "dependencies": {
+    "uuid": "^8.2.0"
   }
 }
