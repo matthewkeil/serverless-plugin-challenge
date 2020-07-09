@@ -8,6 +8,7 @@ package-lock.json
 **/*.js.map
 .serverless_plugins/*.js
 src/*.js
+lib/*.js
 
 
 # local env files
