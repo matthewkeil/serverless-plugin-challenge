@@ -7,7 +7,7 @@ plugins:
   - custom-post-deploy
 
 custom:
-  bucketName: ""
+  bucketName: serverless-plugin-challenge-ye8hn44
   s3Key: "uploads/${self:provider.stage}/deployData.json"
   filesToUpload:
     - localPath: ./src/deployData.json
@@ -18,7 +18,7 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: ${env:AWS_REGION, 'us-east-2'}
-  stage: ${env:NODE_ENV, 'development'}
+  stage: ${opt:stage, env:NODE_ENV, 'development'}
   stackName: ${self:service.name}-${self:provider.stage}
   logRetentionInDays: 7
   deploymentBucket:
@@ -32,7 +32,7 @@ provider:
     - Fn::Join:
       - ''
       - - 'arn:aws:s3:::'
-        - ${self:service.name}
+        - ${self:custom.bucketName}
         - "/*"
   - Effect: Allow
     Action:

@@ -5,7 +5,7 @@ import { S3 } from "aws-sdk";
 import { Debug } from "../lib/debug";
 const debug = Debug();
 import { generate as Generate } from "shortid";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 const generate = () =>
   Generate()
     .replace(/[-_A-Z]/g, `${Math.floor(Math.random() * 10)}`)
@@ -46,13 +46,14 @@ const getBucketName = async () => {
 };
 
 const updateYaml = (bucketName: string) => {
-  const updated = {
-    ...config(),
-    custom: { ...config().custom, bucketName }
-  };
-  debug({ updated });
-  writeFileSync(CONFIG_PATH, YAML.stringify(updated, 2));
-  console.log("updated serverless.yml deployment bucket");
+  const REPLACER = /bucketName: .*(\n\s*)s3Key/;
+  const old = readFileSync(CONFIG_PATH).toString();
+  const [, spacing] = REPLACER.exec(old);
+  const updated = old.replace(
+    REPLACER,
+    `bucketName: ${bucketName}${spacing}s3Key`
+  );
+  writeFileSync(CONFIG_PATH, updated);
   config(true);
 };
 

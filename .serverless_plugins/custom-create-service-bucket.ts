@@ -6,23 +6,16 @@ import Aws from "serverless/plugins/aws/provider/awsProvider";
 const debug = Debug();
 
 module.exports = class CustomCreateServiceBucket implements Plugin {
-  bucketName: string;
   region: string;
   provider: Aws;
-
-  setBucketName = (name: string) => {
-    process.env.BUCKET_NAME = this.bucketName = name;
-  };
-
-  getBucketName = async () => {
-    try {
-      const { Buckets = [] } = await this.provider.request("S3", "listBuckets");
-      const { bucketPrefix } = this.serverless.service.custom;
-      const bucket = Buckets.find(({ Name }) => Name.startsWith(bucketPrefix));
-      if (bucket) this.setBucketName(bucket.Name);
-    } catch {}
-  };
-
+  _bucketName: string;
+  get bucketName() {
+    if (!this._bucketName) {
+      this._bucketName = this.serverless.service.custom.bucketName;
+    }
+    return this._bucketName;
+  }
+  
   serviceStacksExist = async () => {
     let marker: string | undefined;
     const stacks = [] as AWS.CloudFormation.StackSummaries;
@@ -84,26 +77,6 @@ module.exports = class CustomCreateServiceBucket implements Plugin {
     this.serverless.cli.log(`Bucket ${this.bucketName} is empty`);
   };
 
-  createBucketIfNecessary = async () => {
-    // @ts-ignore the typscript definition is incorrect and resources is not defined
-    if (!this.serverless.processedInput.commands.includes("deploy")) {
-      return;
-    }
-    await this.getBucketName();
-    if (this.bucketName) {
-      return;
-    }
-    this.setBucketName(
-      this.serverless.service.custom.bucketPrefix +
-        "-" +
-        this.serverless.utils.generateShortId(7)
-    );
-    await this.provider.request("S3", "createBucket", {
-      Bucket: this.bucketName
-    });
-    this.serverless.cli.log(`Created bucket: ${this.bucketName}`);
-  };
-
   deleteBucketIfNecessary = async () => {
     // @ts-ignore the typscript definition is incorrect and resources is not defined
     if (!this.serverless.processedInput.commands.includes("remove")) {
@@ -120,7 +93,6 @@ module.exports = class CustomCreateServiceBucket implements Plugin {
   };
 
   hooks = {
-    "before:deploy:deploy": this.createBucketIfNecessary,
     "remove:remove": this.deleteBucketIfNecessary
   };
 
