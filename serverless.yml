@@ -7,11 +7,12 @@ plugins:
   - custom-post-deploy
 
 custom:
+  bucketName: ""
   s3Key: "uploads/${self:provider.stage}/deployData.json"
   filesToUpload:
     - localPath: ./src/deployData.json
       fileName: ${self:custom.s3Key}
-      s3Bucket: ${self:service.name}
+      s3Bucket: ${self:custom.bucketName}
 
 provider:
   name: aws
@@ -21,7 +22,7 @@ provider:
   stackName: ${self:service.name}-${self:provider.stage}
   logRetentionInDays: 7
   deploymentBucket:
-    name: ${self:service.name}
+    name: ${self:custom.bucketName}
   deploymentPrefix: deploys
   iamRoleStatements:
   - Effect: Allow
@@ -54,7 +55,7 @@ functions:
     name: ${self:service.name}-${self:provider.stage}-post-deploy-handler
     handler: "./src/s3ToDynamo.handler"
     environment:
-      BUCKET: ${self:service.name}
+      BUCKET: ${self:custom.bucketName}
       TABLE_NAME: ${self:resources.Resources.Table.Properties.TableName}
 
 resources:
