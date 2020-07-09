@@ -20,7 +20,6 @@ class CustomCreateServiceBucket implements Plugin {
   };
 
   serviceStacksExist = async () => {
-    const cf = new CloudFormation({ region: this.region });
     let marker: string | undefined;
     const stacks = [] as AWS.CloudFormation.StackSummaries;
     do {
@@ -29,21 +28,27 @@ class CustomCreateServiceBucket implements Plugin {
         StackSummaries = []
       } = await this.serverless
         .getProvider("aws")
-        .request("S3", ".listStacks", { NextToken: marker });
+        .request("CloudFormation", "listStacks", { NextToken: marker });
       stacks.push(...StackSummaries);
       marker = NextToken;
       debug({ marker });
-    } while (!marker);
+    } while (!!marker);
     const serviceName = this.serverless.service.getServiceName();
     const serviceStacks = stacks.filter(stack =>
-      stack.StackName.includes(serviceName)
+      stack.StackName.includes(serviceName) &&
+      stack.StackStatus !== "DELETE_COMPLETE"
     );
     debug({ serviceName, serviceStacks });
+    const statement = serviceStacks.length
+      ? "Stack(s) " + serviceStacks.map(stack => stack.StackName).join(", ") +
+        " still exist(s).\nBucket will be deleted once all stacks are removed."
+      : "All service stacks have been removed. Bucket is safe to delete.";
+    this.serverless.cli.log(statement);
     return !!serviceStacks.length;
   };
 
   emptyBucket = async () => {
-    this.serverless.cli.log(`attempting to empty ${this.bucketName}`);
+    this.serverless.cli.log(`Attempting to empty ${this.bucketName}`);
     const provider = this.serverless.getProvider("aws");
     const contents = [];
     let marker;
@@ -55,7 +60,7 @@ class CustomCreateServiceBucket implements Plugin {
       contents.push(...Contents);
       debug({ marker });
       marker = Marker;
-    } while (!marker);
+    } while (!!marker);
     if (contents.length) {
       await Promise.all(
         contents.map(({ Key }) =>
@@ -80,7 +85,7 @@ class CustomCreateServiceBucket implements Plugin {
     await this.serverless.getProvider("aws").request("S3", "createBucket", {
       Bucket: this.bucketName
     });
-    this.serverless.cli.log(`created bucket: ${this.bucketName}`);
+    this.serverless.cli.log(`Created bucket: ${this.bucketName}`);
   };
 
   deleteBucketIfNecessary = async () => {
@@ -95,7 +100,7 @@ class CustomCreateServiceBucket implements Plugin {
     await this.serverless.getProvider("aws").request("S3", "deleteBucket", {
       Bucket: this.bucketName
     });
-    this.serverless.cli.log(`created bucket: ${this.bucketName}`);
+    this.serverless.cli.log(`Deleted bucket: ${this.bucketName}`);
   };
 
   hooks = {
@@ -113,3 +118,5 @@ class CustomCreateServiceBucket implements Plugin {
 }
 
 module.exports = CustomCreateServiceBucket;
+
+

@@ -16,7 +16,7 @@ custom:
 provider:
   name: aws
   runtime: nodejs12.x
-  region: ${opt:region, 'us-east-2'}
+  region: ${env:AWS_REGION, 'us-east-2'}
   stage: ${env:NODE_ENV, 'development'}
   stackName: ${self:service.name}-${self:provider.stage}
   logRetentionInDays: 7
