@@ -4,6 +4,7 @@ Thank you for the opportunity to attempt this challenge.  It has been fun and re
 
 To test the project you can add a secret message into `src/deployData.json` and it will be output back to the console.
 
+## Directions
 **NOTE 1** Seting up credentials is not necessary if you have already configured `~/.aws/credentials`.  If not add a `.env` file at the root of this repo with the following keys.  It is important to not have spaces around the `=` sign.
 ```bash
 AWS_ACCESS_KEY_ID='****'
@@ -12,12 +13,13 @@ AWS_SECRET_ACCESS_KEY='*****'
 
 **NOTE 2** If you already have `~/.aws/config` setup there is nothing further to configure.  The default region is set to `us-east-1` and if your `~/.aws/config` is set for a different default region there will be a conflict.  You can override this by adding `AWS_REGION='***'` to your `.env` mentioned above.
 
-
 ```bash
 git clone https://github.com/matthewkeil/serverless-plugin-challenge.git
 cd serverless-plugin-challenge
 npm i
 npm run deploy
+npm run deploy-prod
+npm run remove-prod
 npm run remove
 ```
 

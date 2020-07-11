@@ -4,7 +4,9 @@
   "scripts": {
     "build": "node_modules/.bin/tsc --project tsconfig.build.json",
     "deploy": "npm run build && npm run ts bin/preDeploy && npm run sls -- deploy",
+    "deploy-prod": "NODE_ENV=production npm run deploy",
     "remove": "npm run sls -- remove",
+    "remove-prod": "NODE_ENV=production npm run remove",
     "lint": "node_modules/.bin/eslint --ext .ts --fix src/ .serverless_plugins/",
     "node": "node",
     "sls": "node -r dotenv/config node_modules/.bin/sls",
